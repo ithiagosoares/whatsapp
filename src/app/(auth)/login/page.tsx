@@ -81,7 +81,7 @@ export default function LoginPage() {
   return (
     <Card className="w-full max-w-sm">
       <CardHeader className="items-center text-center">
-        <Icon className="mb-4 size-12" />
+        <Icon className="mb-4 h-11 w-auto" />
         <CardTitle className="text-2xl font-bold">Login</CardTitle>
         <CardDescription>
           Digite seu e-mail abaixo para fazer login em sua conta.
