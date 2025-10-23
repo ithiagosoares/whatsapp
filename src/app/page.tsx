@@ -1,5 +1,7 @@
-import GeneratorPage from '@/components/app/generator-page';
-
 export default function Home() {
-  return <GeneratorPage />;
+  return (
+    <main>
+      <h1>Projeto em breve...</h1>
+    </main>
+  );
 }
