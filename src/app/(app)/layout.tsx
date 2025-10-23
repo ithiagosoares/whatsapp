@@ -35,7 +35,7 @@ import { type User } from "@/lib/types"
 
 import Icon from "@/app/icon"
 import NavItem from "./nav-item"
-import { useEffect, useMemo } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { Loader2 } from "lucide-react"
 
 export default function AppLayout({
@@ -55,7 +55,7 @@ export default function AppLayout({
   }, [firestore, authUser]);
 
   const { data: userData, isLoading: isUserDataLoading } = useDoc<User>(userDocRef);
-
+  
   useEffect(() => {
     if (!isAuthUserLoading && !authUser) {
       router.push("/login");
@@ -71,6 +71,7 @@ export default function AppLayout({
       href: "/dashboard",
       icon: LayoutDashboard,
       label: "Dashboard",
+      tourId: "dashboard-nav",
     },
     {
       href: "/calendar",
@@ -81,21 +82,25 @@ export default function AppLayout({
       href: "/patients",
       icon: Users,
       label: "Pacientes",
+      tourId: "patients-nav",
     },
     {
       href: "/templates",
       icon: FileText,
       label: "Templates",
+      tourId: "templates-nav",
     },
     {
       href: "/workflows",
       icon: Workflow,
       label: "Fluxos",
+      tourId: "workflows-nav",
     },
     {
       href: "/outbox",
       icon: Send,
       label: "Caixa de Saída",
+      tourId: "outbox-nav",
     },
     {
       href: "/consent-audit",
@@ -132,7 +137,7 @@ export default function AppLayout({
           </div>
           <div className="p-4 border-t mt-auto shrink-0">
             <nav className="grid gap-1">
-                <NavItem href="/settings" icon={Settings} label="Configurações" />
+                <NavItem href="/settings" icon={Settings} label="Configurações" tourId="settings-nav" />
                 <NavItem href="/support" icon={LifeBuoy} label="Suporte" />
             </nav>
           </div>
