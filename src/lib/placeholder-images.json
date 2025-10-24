@@ -1,0 +1,34 @@
+{
+  "placeholderImages": [
+    {
+      "id": "patient-1",
+      "description": "A portrait of a patient",
+      "imageUrl": "https://images.unsplash.com/photo-1614283233556-f35b0c801ef1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHx3b21hbiUyMHBvcnRyYWl0fGVufDB8fHx8MTc1OTcxODAxNHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "woman portrait"
+    },
+    {
+      "id": "patient-2",
+      "description": "A portrait of a patient",
+      "imageUrl": "https://images.unsplash.com/photo-1636377985931-898218afd306?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxtYW4lMjBwb3J0cmFpdHxlbnwwfHx8fDE3NTk2NzcyNjV8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "man portrait"
+    },
+    {
+      "id": "patient-3",
+      "description": "A portrait of a patient",
+      "imageUrl": "https://images.unsplash.com/photo-1542596768-5d1d21f1cf98?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxwZXJzb24lMjBzbWlsaW5nfGVufDB8fHx8MTc1OTY2MDUwM3ww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "person smiling"
+    },
+    {
+      "id": "patient-4",
+      "description": "A portrait of a patient",
+      "imageUrl": "https://images.unsplash.com/photo-1498757581981-8ddb3c0b9b07?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxlbGRlcmx5JTIwd29tYW58ZW58MHx8fHwxNzU5NzU0ODAyfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "elderly woman"
+    },
+    {
+      "id": "patient-5",
+      "description": "A portrait of a patient",
+      "imageUrl": "https://images.unsplash.com/photo-1519238263530-99bdd11df2ea?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxjaGlsZCUyMHBvcnRyYWl0fGVufDB8fHx8MTc1OTc0OTgyNHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "child portrait"
+    }
+  ]
+}
