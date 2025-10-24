@@ -18,6 +18,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { useUser, useFirestore, useDoc, setDocumentNonBlocking, useMemoFirebase } from "@/firebase"
 import { doc, type User } from "firebase/firestore"
 import { cn } from "@/lib/utils"
+import { getFunctions, httpsCallable } from "firebase/functions"
 
 declare global {
   interface Window {
@@ -172,7 +173,8 @@ export default function SettingsPage() {
     }
   ]
 
-  const handlePlanAction = async (planId: string) => {
+  const handlePlanAction = async (planId: string, priceId: string | null | undefined) => {
+    // This is a placeholder for actual Stripe integration logic
     if (planId === 'enterprise') {
       toast({ title: "Entre em Contato", description: "Por favor, entre em contato com nossa equipe de vendas para planos empresariais." });
       return;
@@ -387,7 +389,7 @@ export default function SettingsPage() {
                                     className={cn("w-full", !plan.isCurrent && plan.id === 'professional' && "bg-teal-500 hover:bg-teal-600")}
                                     variant={plan.isCurrent ? 'outline' : 'default'}
                                     disabled={plan.isCurrent || isSubmitting === plan.id}
-                                    onClick={() => handlePlanAction(plan.id)}
+                                    onClick={() => handlePlanAction(plan.id, null)}
                                 >
                                     {isSubmitting === plan.id ? (
                                         <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Aguarde...</>
@@ -445,3 +447,5 @@ export default function SettingsPage() {
     </>
   )
 }
+
+    
