@@ -16,6 +16,10 @@ export default {
         code: ['monospace'],
       },
       colors: {
+        'problem-red': {
+          DEFAULT: '#dc2626', // red-600
+          dark: '#991b1b', // red-800
+        },
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',
         card: {
