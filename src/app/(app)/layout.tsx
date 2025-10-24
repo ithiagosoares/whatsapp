@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useRouter, usePathname } from "next/navigation"
+import { useRouter, usePathname, useSearchParams } from "next/navigation"
 import {
   Avatar,
   AvatarFallback,
@@ -33,9 +33,10 @@ import { useAuth, useUser, useFirestore, useDoc, useMemoFirebase, setDocumentNon
 import { doc } from "firebase/firestore"
 import { type User } from "@/lib/types"
 
-import Icon from "@/app/icon"
+import { AppLogo } from "@/components/app-logo"
 import NavItem from "./nav-item"
-import { useEffect, useMemo, useState } from "react"
+import { OnboardingTour } from "@/components/onboarding-tour"
+import { useEffect, useState, useMemo } from "react"
 import { Loader2 } from "lucide-react"
 
 export default function AppLayout({
@@ -47,6 +48,7 @@ export default function AppLayout({
   const auth = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const firestore = useFirestore();
 
   const userDocRef = useMemoFirebase(() => {
@@ -55,16 +57,44 @@ export default function AppLayout({
   }, [firestore, authUser]);
 
   const { data: userData, isLoading: isUserDataLoading } = useDoc<User>(userDocRef);
+
+  const [showOnboarding, setShowOnboarding] = useState(false);
   
+  const isTourActive = useMemo(() => searchParams.get('tour') === 'true', [searchParams]);
+
   useEffect(() => {
     if (!isAuthUserLoading && !authUser) {
       router.push("/login");
     }
   }, [isAuthUserLoading, authUser, router]);
 
+  useEffect(() => {
+    if (isTourActive) {
+      setShowOnboarding(true);
+      return;
+    }
+    if (!isUserDataLoading && userData) {
+      if (!userData.onboardingCompleted) {
+        setShowOnboarding(true);
+      }
+    }
+  }, [isUserDataLoading, userData, isTourActive]);
+
+
   const handleLogout = () => {
     auth.signOut();
   };
+
+  const handleOnboardingComplete = () => {
+    if (userDocRef && !userData?.onboardingCompleted) {
+      setDocumentNonBlocking(userDocRef, { onboardingCompleted: true }, { merge: true });
+    }
+    if (isTourActive) {
+        // Remove the query param from URL without reloading the page
+        router.replace(pathname, { scroll: false });
+    }
+    setShowOnboarding(false);
+  }
   
   const navItems = [
     {
@@ -121,11 +151,12 @@ export default function AppLayout({
 
   return (
     <div className="grid h-screen w-full lg:grid-cols-[280px_1fr]">
+      {showOnboarding && <OnboardingTour onComplete={handleOnboardingComplete} />}
       <div className="hidden border-r bg-card lg:block">
         <div className="flex h-full max-h-screen flex-col">
           <div className="flex h-16 items-center border-b px-6 shrink-0">
             <Link href="/dashboard">
-              <Icon className="h-8 w-auto"/>
+              <AppLogo />
             </Link>
           </div>
           <div className="flex-1 overflow-y-auto py-2">
