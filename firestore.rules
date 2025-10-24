@@ -1,3 +1,4 @@
+
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -27,19 +28,19 @@ service cloud.firestore {
       }
 
       // Allow a user to create their own profile
-      allow create: if isSignedIn() && isOwner(userId) && request.auth.uid == userId;
+      allow create: if isSignedIn() && isOwner(userId);
 
       // Allow a user to get their own profile
-      allow get: if isSignedIn() && isOwner(userId) && request.auth.uid == userId;
+      allow get: if isSignedIn() && isOwner(userId);
 
       // Allow a user to list (query) all users
       allow list: if false;
 
       // Allow a user to update their own profile
-      allow update: if isSignedIn() && isOwner(userId) && request.auth.uid == userId;
+      allow update: if isSignedIn() && isOwner(userId);
 
       // Allow a user to delete their own profile
-      allow delete: if isSignedIn() && isOwner(userId) && request.auth.uid == userId;
+      allow delete: if isSignedIn() && isOwner(userId);
     }
 
     /**
@@ -67,19 +68,19 @@ service cloud.firestore {
       }
       
       // Allow the owner to create a patient
-      allow create: if isSignedIn() && isOwner(userId) && request.auth.uid == userId;
+      allow create: if isSignedIn() && isOwner(userId);
 
       // Allow the owner to get the patient
-      allow get: if isSignedIn() && isOwner(userId) && request.auth.uid == userId;
+      allow get: if isSignedIn() && isOwner(userId);
 
       // Allow the owner to list patients
-      allow list: if isSignedIn() && isOwner(userId) && request.auth.uid == userId;
+      allow list: if isSignedIn() && isOwner(userId);
 
       // Allow the owner to update the patient
-      allow update: if isSignedIn() && isOwner(userId) && request.auth.uid == userId;
+      allow update: if isSignedIn() && isOwner(userId);
 
       // Allow the owner to delete the patient
-      allow delete: if isSignedIn() && isOwner(userId) && request.auth.uid == userId;
+      allow delete: if isSignedIn() && isOwner(userId);
     }
 
     /**
@@ -107,19 +108,19 @@ service cloud.firestore {
       }
 
       // Allow the owner to create an appointment
-      allow create: if isSignedIn() && isOwner(userId) && request.auth.uid == userId;
+      allow create: if isSignedIn() && isOwner(userId);
 
       // Allow the owner to get the appointment
-      allow get: if isSignedIn() && isOwner(userId) && request.auth.uid == userId;
+      allow get: if isSignedIn() && isOwner(userId);
 
       // Allow the owner to list appointments
-      allow list: if isSignedIn() && isOwner(userId) && request.auth.uid == userId;
+      allow list: if isSignedIn() && isOwner(userId);
 
       // Allow the owner to update the appointment
-      allow update: if isSignedIn() && isOwner(userId) && request.auth.uid == userId;
+      allow update: if isSignedIn() && isOwner(userId);
 
       // Allow the owner to delete the appointment
-      allow delete: if isSignedIn() && isOwner(userId) && request.auth.uid == userId;
+      allow delete: if isSignedIn() && isOwner(userId);
     }
 
     /**
@@ -147,19 +148,19 @@ service cloud.firestore {
       }
 
       // Allow the owner to create a message template
-      allow create: if isSignedIn() && isOwner(userId) && request.auth.uid == userId;
+      allow create: if isSignedIn() && isOwner(userId);
 
       // Allow the owner to get the message template
-      allow get: if isSignedIn() && isOwner(userId) && request.auth.uid == userId;
+      allow get: if isSignedIn() && isOwner(userId);
 
       // Allow the owner to list message templates
-      allow list: if isSignedIn() && isOwner(userId) && request.auth.uid == userId;
+      allow list: if isSignedIn() && isOwner(userId);
 
       // Allow the owner to update the message template
-      allow update: if isSignedIn() && isOwner(userId) && request.auth.uid == userId;
+      allow update: if isSignedIn() && isOwner(userId);
 
       // Allow the owner to delete the message template
-      allow delete: if isSignedIn() && isOwner(userId) && request.auth.uid == userId;
+      allow delete: if isSignedIn() && isOwner(userId);
     }
 
     /**
@@ -187,19 +188,19 @@ service cloud.firestore {
       }
 
       // Allow the owner to create a scheduled message
-      allow create: if isSignedIn() && isOwner(userId) && request.auth.uid == userId;
+      allow create: if isSignedIn() && isOwner(userId);
 
       // Allow the owner to get the scheduled message
-      allow get: if isSignedIn() && isOwner(userId) && request.auth.uid == userId;
+      allow get: if isSignedIn() && isOwner(userId);
 
       // Allow the owner to list scheduled messages
-      allow list: if isSignedIn() && isOwner(userId) && request.auth.uid == userId;
+      allow list: if isSignedIn() && isOwner(userId);
 
       // Allow the owner to update the scheduled message
-      allow update: if isSignedIn() && isOwner(userId) && request.auth.uid == userId;
+      allow update: if isSignedIn() && isOwner(userId);
 
       // Allow the owner to delete the scheduled message
-      allow delete: if isSignedIn() && isOwner(userId) && request.auth.uid == userId;
+      allow delete: if isSignedIn() && isOwner(userId);
     }
 
     /**
@@ -227,19 +228,19 @@ service cloud.firestore {
       }
 
       // Allow the owner to create a workflow
-      allow create: if isSignedIn() && isOwner(userId) && request.auth.uid == userId;
+      allow create: if isSignedIn() && isOwner(userId);
 
       // Allow the owner to get the workflow
-      allow get: if isSignedIn() && isOwner(userId) && request.auth.uid == userId;
+      allow get: if isSignedIn() && isOwner(userId);
 
       // Allow the owner to list workflows
-      allow list: if isSignedIn() && isOwner(userId) && request.auth.uid == userId;
+      allow list: if isSignedIn() && isOwner(userId);
 
       // Allow the owner to update the workflow
-      allow update: if isSignedIn() && isOwner(userId) && request.auth.uid == userId;
+      allow update: if isSignedIn() && isOwner(userId);
 
       // Allow the owner to delete the workflow
-      allow delete: if isSignedIn() && isOwner(userId) && request.auth.uid == userId;
+      allow delete: if isSignedIn() && isOwner(userId);
     }
   }
 }
