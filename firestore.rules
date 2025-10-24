@@ -1,118 +1,38 @@
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper function to check if the user is signed in
     function isSignedIn() {
       return request.auth != null;
     }
 
-    // Helper function to check if the user is the owner of the document
     function isOwner(userId) {
-      return request.auth.uid == userId;
+      return isSignedIn() && request.auth.uid == userId;
     }
 
-    /**
-     * @description Controls access to user profiles.
-     * @path /users/{userId}
-     * @allow (create) - User with UID 'user_abc' can create their profile at /users/user_abc if request.auth.uid == 'user_abc'.
-     * @allow (get) - User with UID 'user_abc' can get their profile at /users/user_abc.
-     * @allow (update) - User with UID 'user_abc' can update their profile at /users/user_abc.
-     * @allow (delete) - User with UID 'user_abc' can delete their profile at /users/user_abc.
-     * @deny (create) - User with UID 'user_xyz' cannot create a profile at /users/user_abc.
-     * @deny (get) - User with UID 'user_xyz' cannot get the profile at /users/user_abc.
-     * @deny (update) - User with UID 'user_xyz' cannot update the profile at /users/user_abc.
-     * @deny (delete) - User with UID 'user_xyz' cannot delete the profile at /users/user_abc.
-     * @principle Enforces document ownership for writes.
-     */
     match /users/{userId} {
-      allow read, write: if isSignedIn() && isOwner(userId);
-      allow list: if false;
+      allow read, write: if request.auth.uid == userId;
     }
 
-    /**
-     * @description Controls access to patient records owned by a specific user.
-     * @path /users/{userId}/patients/{patientId}
-     * @allow (create) - User with UID 'user_abc' can create a patient record under /users/user_abc/patients/patient_123 if request.auth.uid == 'user_abc'.
-     * @allow (get) - User with UID 'user_abc' can get a patient record under /users/user_abc/patients/patient_123.
-     * @allow (update) - User with UID 'user_abc' can update a patient record under /users/user_abc/patients/patient_123.
-     * @allow (delete) - User with UID 'user_abc' can delete a patient record under /users/user_abc/patients/patient_123.
-     * @deny (create) - User with UID 'user_xyz' cannot create a patient record under /users/user_abc/patients/patient_123.
-     * @deny (get) - User with UID 'user_xyz' cannot get a patient record under /users/user_abc/patients/patient_123.
-     * @deny (update) - User with UID 'user_xyz' cannot update a patient record under /users/user_abc/patients/patient_123.
-     * @deny (delete) - User with UID 'user_xyz' cannot delete a patient record under /users/user_abc/patients/patient_123.
-     * @principle Enforces document ownership for writes.
-     */
     match /users/{userId}/patients/{patientId} {
-      allow read, write: if isSignedIn() && isOwner(userId);
+      allow read, write: if isOwner(userId);
     }
 
-    /**
-     * @description Controls access to appointment records owned by a specific patient of a specific user.
-     * @path /users/{userId}/patients/{patientId}/appointments/{appointmentId}
-     * @allow (create) - User with UID 'user_abc' can create an appointment record under /users/user_abc/patients/patient_123/appointments/appt_456 if request.auth.uid == 'user_abc'.
-     * @allow (get) - User with UID 'user_abc' can get an appointment record under /users/user_abc/patients/patient_123/appointments/appt_456.
-     * @allow (update) - User with UID 'user_abc' can update an appointment record under /users/user_abc/patients/patient_123/appointments/appt_456.
-     * @allow (delete) - User with UID 'user_abc' can delete an appointment record under /users/user_abc/patients/patient_123/appointments/appt_456.
-     * @deny (create) - User with UID 'user_xyz' cannot create an appointment record under /users/user_abc/patients/patient_123/appointments/appt_456.
-     * @deny (get) - User with UID 'user_xyz' cannot get an appointment record under /users/user_abc/patients/patient_123/appointments/appt_456.
-     * @deny (update) - User with UID 'user_xyz' cannot update an appointment record under /users/user_abc/patients/patient_123/appointments/appt_456.
-     * @deny (delete) - User with UID 'user_xyz' cannot delete an appointment record under /users/user_abc/patients/patient_123/appointments/appt_456.
-     * @principle Enforces document ownership for writes.
-     */
     match /users/{userId}/patients/{patientId}/appointments/{appointmentId} {
-      allow read, write: if isSignedIn() && isOwner(userId);
+      allow read, write: if isOwner(userId);
     }
 
-    /**
-     * @description Controls access to message templates owned by a specific user.
-     * @path /users/{userId}/messageTemplates/{messageTemplateId}
-     * @allow (create) - User with UID 'user_abc' can create a message template under /users/user_abc/messageTemplates/template_789 if request.auth.uid == 'user_abc'.
-     * @allow (get) - User with UID 'user_abc' can get a message template under /users/user_abc/messageTemplates/template_789.
-     * @allow (update) - User with UID 'user_abc' can update a message template under /users/user_abc/messageTemplates/template_789.
-     * @allow (delete) - User with UID 'user_abc' can delete a message template under /users/user_abc/messageTemplates/template_789.
-     * @deny (create) - User with UID 'user_xyz' cannot create a message template under /users/user_abc/messageTemplates/template_789.
-     * @deny (get) - User with UID 'user_xyz' cannot get a message template under /users/user_abc/messageTemplates/template_789.
-     * @deny (update) - User with UID 'user_xyz' cannot update a message template under /users/user_abc/messageTemplates/template_789.
-     * @deny (delete) - User with UID 'user_xyz' cannot delete a message template under /users/user_abc/messageTemplates/template_789.
-     * @principle Enforces document ownership for writes.
-     */
     match /users/{userId}/messageTemplates/{messageTemplateId} {
-      allow read, write: if isSignedIn() && isOwner(userId);
+      allow read, write: if isOwner(userId);
     }
 
-    /**
-     * @description Controls access to scheduled messages owned by a specific user.
-     * @path /users/{userId}/scheduledMessages/{scheduledMessageId}
-     * @allow (create) - User with UID 'user_abc' can create a scheduled message under /users/user_abc/scheduledMessages/message_012 if request.auth.uid == 'user_abc'.
-     * @allow (get) - User with UID 'user_abc' can get a scheduled message under /users/user_abc/scheduledMessages/message_012.
-     * @allow (update) - User with UID 'user_abc' can update a scheduled message under /users/user_abc/scheduledMessages/message_012.
-     * @allow (delete) - User with UID 'user_abc' can delete a scheduled message under /users/user_abc/scheduledMessages/message_012.
-     * @deny (create) - User with UID 'user_xyz' cannot create a scheduled message under /users/user_abc/scheduledMessages/message_012.
-     * @deny (get) - User with UID 'user_xyz' cannot get a scheduled message under /users/user_abc/scheduledMessages/message_012.
-     * @deny (update) - User with UID 'user_xyz' cannot update a scheduled message under /users/user_abc/scheduledMessages/message_012.
-     * @deny (delete) - User with UID 'user_xyz' cannot delete a scheduled message under /users/user_abc/scheduledMessages/message_012.
-     * @principle Enforces document ownership for writes.
-     */
     match /users/{userId}/scheduledMessages/{scheduledMessageId} {
-      allow read, write: if isSignedIn() && isOwner(userId);
+      allow read, write: if isOwner(userId);
     }
 
-    /**
-     * @description Controls access to workflow configurations owned by a specific user.
-     * @path /users/{userId}/workflows/{workflowId}
-     * @allow (create) - User with UID 'user_abc' can create a workflow under /users/user_abc/workflows/workflow_345 if request.auth.uid == 'user_abc'.
-     * @allow (get) - User with UID 'user_abc' can get a workflow under /users/user_abc/workflows/workflow_345.
-     * @allow (update) - User with UID 'user_abc' can update a workflow under /users/user_abc/workflows/workflow_345.
-     * @allow (delete) - User with UID 'user_abc' can delete a workflow under /users/user_abc/workflows/workflow_345.
-     * @deny (create) - User with UID 'user_xyz' cannot create a workflow under /users/user_abc/workflows/workflow_345.
-     * @deny (get) - User with UID 'user_xyz' cannot get a workflow under /users/user_abc/workflows/workflow_345.
-     * @deny (update) - User with UID 'user_xyz' cannot update a workflow under /users/user_abc/workflows/workflow_345.
-     * @deny (delete) - User with UID 'user_xyz' cannot delete a workflow under /users/user_abc/workflows/workflow_345.
-     * @principle Enforces document ownership for writes.
-     */
     match /users/{userId}/workflows/{workflowId} {
-      allow read, write: if isSignedIn() && isOwner(userId);
+      allow read, write: if isOwner(userId);
     }
   }
 }
