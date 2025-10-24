@@ -1,7 +1,16 @@
-
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    // Helper function to check if the user is signed in
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Helper function to check if the user is the owner of the document
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
 
     /**
      * @description Controls access to user profiles.
@@ -17,30 +26,8 @@ service cloud.firestore {
      * @principle Enforces document ownership for writes.
      */
     match /users/{userId} {
-      // Helper function to check if the user is signed in
-      function isSignedIn() {
-        return request.auth != null;
-      }
-
-      // Helper function to check if the user is the owner of the document
-      function isOwner(userId) {
-        return request.auth.uid == userId;
-      }
-
-      // Allow a user to create their own profile
-      allow create: if isSignedIn() && isOwner(userId);
-
-      // Allow a user to get their own profile
-      allow get: if isSignedIn() && isOwner(userId);
-
-      // Allow a user to list (query) all users
+      allow read, write: if isSignedIn() && isOwner(userId);
       allow list: if false;
-
-      // Allow a user to update their own profile
-      allow update: if isSignedIn() && isOwner(userId);
-
-      // Allow a user to delete their own profile
-      allow delete: if isSignedIn() && isOwner(userId);
     }
 
     /**
@@ -57,30 +44,7 @@ service cloud.firestore {
      * @principle Enforces document ownership for writes.
      */
     match /users/{userId}/patients/{patientId} {
-      // Helper function to check if the user is signed in
-      function isSignedIn() {
-        return request.auth != null;
-      }
-
-      // Helper function to check if the user is the owner of the document
-      function isOwner(userId) {
-        return request.auth.uid == userId;
-      }
-      
-      // Allow the owner to create a patient
-      allow create: if isSignedIn() && isOwner(userId);
-
-      // Allow the owner to get the patient
-      allow get: if isSignedIn() && isOwner(userId);
-
-      // Allow the owner to list patients
-      allow list: if isSignedIn() && isOwner(userId);
-
-      // Allow the owner to update the patient
-      allow update: if isSignedIn() && isOwner(userId);
-
-      // Allow the owner to delete the patient
-      allow delete: if isSignedIn() && isOwner(userId);
+      allow read, write: if isSignedIn() && isOwner(userId);
     }
 
     /**
@@ -97,30 +61,7 @@ service cloud.firestore {
      * @principle Enforces document ownership for writes.
      */
     match /users/{userId}/patients/{patientId}/appointments/{appointmentId} {
-      // Helper function to check if the user is signed in
-      function isSignedIn() {
-        return request.auth != null;
-      }
-
-      // Helper function to check if the user is the owner of the document
-      function isOwner(userId) {
-        return request.auth.uid == userId;
-      }
-
-      // Allow the owner to create an appointment
-      allow create: if isSignedIn() && isOwner(userId);
-
-      // Allow the owner to get the appointment
-      allow get: if isSignedIn() && isOwner(userId);
-
-      // Allow the owner to list appointments
-      allow list: if isSignedIn() && isOwner(userId);
-
-      // Allow the owner to update the appointment
-      allow update: if isSignedIn() && isOwner(userId);
-
-      // Allow the owner to delete the appointment
-      allow delete: if isSignedIn() && isOwner(userId);
+      allow read, write: if isSignedIn() && isOwner(userId);
     }
 
     /**
@@ -137,30 +78,7 @@ service cloud.firestore {
      * @principle Enforces document ownership for writes.
      */
     match /users/{userId}/messageTemplates/{messageTemplateId} {
-      // Helper function to check if the user is signed in
-      function isSignedIn() {
-        return request.auth != null;
-      }
-
-      // Helper function to check if the user is the owner of the document
-      function isOwner(userId) {
-        return request.auth.uid == userId;
-      }
-
-      // Allow the owner to create a message template
-      allow create: if isSignedIn() && isOwner(userId);
-
-      // Allow the owner to get the message template
-      allow get: if isSignedIn() && isOwner(userId);
-
-      // Allow the owner to list message templates
-      allow list: if isSignedIn() && isOwner(userId);
-
-      // Allow the owner to update the message template
-      allow update: if isSignedIn() && isOwner(userId);
-
-      // Allow the owner to delete the message template
-      allow delete: if isSignedIn() && isOwner(userId);
+      allow read, write: if isSignedIn() && isOwner(userId);
     }
 
     /**
@@ -177,30 +95,7 @@ service cloud.firestore {
      * @principle Enforces document ownership for writes.
      */
     match /users/{userId}/scheduledMessages/{scheduledMessageId} {
-      // Helper function to check if the user is signed in
-      function isSignedIn() {
-        return request.auth != null;
-      }
-
-      // Helper function to check if the user is the owner of the document
-      function isOwner(userId) {
-        return request.auth.uid == userId;
-      }
-
-      // Allow the owner to create a scheduled message
-      allow create: if isSignedIn() && isOwner(userId);
-
-      // Allow the owner to get the scheduled message
-      allow get: if isSignedIn() && isOwner(userId);
-
-      // Allow the owner to list scheduled messages
-      allow list: if isSignedIn() && isOwner(userId);
-
-      // Allow the owner to update the scheduled message
-      allow update: if isSignedIn() && isOwner(userId);
-
-      // Allow the owner to delete the scheduled message
-      allow delete: if isSignedIn() && isOwner(userId);
+      allow read, write: if isSignedIn() && isOwner(userId);
     }
 
     /**
@@ -217,30 +112,7 @@ service cloud.firestore {
      * @principle Enforces document ownership for writes.
      */
     match /users/{userId}/workflows/{workflowId} {
-      // Helper function to check if the user is signed in
-      function isSignedIn() {
-        return request.auth != null;
-      }
-
-      // Helper function to check if the user is the owner of the document
-      function isOwner(userId) {
-        return request.auth.uid == userId;
-      }
-
-      // Allow the owner to create a workflow
-      allow create: if isSignedIn() && isOwner(userId);
-
-      // Allow the owner to get the workflow
-      allow get: if isSignedIn() && isOwner(userId);
-
-      // Allow the owner to list workflows
-      allow list: if isSignedIn() && isOwner(userId);
-
-      // Allow the owner to update the workflow
-      allow update: if isSignedIn() && isOwner(userId);
-
-      // Allow the owner to delete the workflow
-      allow delete: if isSignedIn() && isOwner(userId);
+      allow read, write: if isSignedIn() && isOwner(userId);
     }
   }
 }
