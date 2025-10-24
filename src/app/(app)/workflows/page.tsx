@@ -161,7 +161,7 @@ export default function WorkflowsPage() {
     const firstStep = wf.steps[0];
     const { quantity, unit, event } = firstStep.schedule;
     
-    const unitMap = {
+    const unitMap: Record<string, string> = {
         hours: "hora(s)",
         days: "dia(s)",
         weeks: "semana(s)",
