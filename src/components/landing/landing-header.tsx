@@ -50,7 +50,7 @@ export function LandingHeader() {
           </Button>
           <Button
             asChild
-            className="bg-gradient-to-r from-primary to-[#05326D] text-white font-semibold hover:shadow-lg hover:brightness-110 transition-all duration-300"
+            className="bg-gradient-to-r from-[#00B3A4] to-[#05326D] text-white font-semibold hover:shadow-lg hover:brightness-110 transition-all duration-300"
           >
             <Link href="/signup">Quero aumentar meus retornos</Link>
           </Button>
@@ -79,7 +79,7 @@ export function LandingHeader() {
                     </Button>
                     <Button
                         asChild
-                        className="bg-gradient-to-r from-primary to-[#05326D] text-white font-semibold hover:shadow-lg hover:brightness-110 transition-all duration-300"
+                        className="bg-gradient-to-r from-[#00B3A4] to-[#05326D] text-white font-semibold hover:shadow-lg hover:brightness-110 transition-all duration-300"
                     >
                         <Link href="/signup" onClick={() => setMenuOpen(false)}>Quero aumentar meus retornos</Link>
                     </Button>

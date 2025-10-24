@@ -28,12 +28,12 @@ export function SocialProofSection() {
                 {/* Left Column */}
                 <div className="space-y-6">
                     <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl text-gray-900">
-                        <span className="bg-gradient-to-r from-primary to-[#05326D] bg-clip-text text-transparent">67%</span> das faltas acontecem na segunda consulta
+                        <span className="bg-gradient-to-r from-[#00B3A4] to-[#05326D] bg-clip-text text-transparent">67%</span> das faltas acontecem na segunda consulta
                     </h2>
                     <p className="text-lg text-gray-700">
                         E é aqui que a <Link href="/" className="text-primary font-semibold hover:underline">VitalLink</Link> entra: para garantir que seus pacientes nunca mais esqueçam da sua clínica.
                     </p>
-                    <Button asChild size="lg" className="bg-gradient-to-r from-primary to-[#05326D] text-white font-semibold hover:shadow-lg hover:brightness-110 transition-all duration-300">
+                    <Button asChild size="lg" className="bg-gradient-to-r from-[#00B3A4] to-[#05326D] text-white font-semibold hover:shadow-lg hover:brightness-110 transition-all duration-300">
                         <Link href="/signup">
                            Quero aumentar meus retornos
                         </Link>

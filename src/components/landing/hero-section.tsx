@@ -18,14 +18,14 @@ export function HeroSection() {
         <div className="grid gap-6 lg:grid-cols-2 lg:gap-12 xl:gap-16">
           <div className="flex flex-col justify-center space-y-4 text-center lg:text-left">
             <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl lg:text-5xl/[1.2] xl:text-6xl/[1.2] text-gray-900">
-              Encha a agenda da sua clínica com <span className="bg-gradient-to-r from-primary to-[#05326D] bg-clip-text text-transparent">lembretes automáticos</span> pelo WhatsApp 📲
+              Encha a agenda da sua clínica com <span className="bg-gradient-to-r from-[#00B3A4] to-[#05326D] bg-clip-text text-transparent">lembretes automáticos</span> pelo WhatsApp 📲
             </h1>
             <p className="max-w-[600px] text-gray-600 md:text-xl mx-auto lg:mx-0">
-              O lembrete inteligente que aumenta o <span className="bg-gradient-to-r from-primary to-[#05326D] bg-clip-text text-transparent font-medium">retorno</span> da sua clínica odontológica.
+              O lembrete inteligente que aumenta o <span className="bg-gradient-to-r from-[#00B3A4] to-[#05326D] bg-clip-text text-transparent font-medium">retorno</span> da sua clínica odontológica.
             </p>
 
             <div className="flex flex-col gap-4 items-center lg:items-start">
-              <Button asChild size="lg" className="bg-gradient-to-r from-primary to-[#05326D] text-white font-semibold hover:shadow-lg hover:brightness-110 transition-all duration-300">
+              <Button asChild size="lg" className="bg-gradient-to-r from-[#00B3A4] to-[#05326D] text-white font-semibold hover:shadow-lg hover:brightness-110 transition-all duration-300">
                 <Link href="/signup">
                   Quero aumentar meus retornos
                 </Link>

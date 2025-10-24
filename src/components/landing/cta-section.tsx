@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 
 export function CtaSection() {
   return (
-    <section className="w-full py-20 lg:py-24 bg-gradient-to-r from-primary to-[#05326D]">
+    <section className="w-full py-20 lg:py-24 bg-gradient-to-r from-[#00B3A4] to-[#05326D]">
       <div className="container mx-auto px-4 md:px-6">
         <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-lg p-8 md:p-12">
           <div className="grid md:grid-cols-2 gap-8 items-center">
@@ -15,7 +15,7 @@ export function CtaSection() {
                 Sua <span className="text-primary">agenda cheia</span> começa <span className="text-primary">hoje.</span>
               </h2>
               <div className="flex justify-center md:justify-start">
-                 <Button asChild size="lg" className="bg-gradient-to-r from-primary to-[#05326D] text-white font-semibold hover:shadow-lg hover:brightness-110 transition-all duration-300">
+                 <Button asChild size="lg" className="bg-gradient-to-r from-[#00B3A4] to-[#05326D] text-white font-semibold hover:shadow-lg hover:brightness-110 transition-all duration-300">
                     <Link href="/signup">
                         Quero aumentar meus retornos
                     </Link>
