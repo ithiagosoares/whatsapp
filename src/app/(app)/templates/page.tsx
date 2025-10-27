@@ -21,10 +21,13 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { PageHeader } from "@/components/page-header"
 import { type Template } from "@/lib/types"
-import { useUser, useFirestore, useCollection, useMemoFirebase, deleteDocumentNonBlocking, addDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase"
 import { collection, doc, writeBatch, query, where, getDocs } from "firebase/firestore"
 import { useToast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
+
+import { useUser, useFirestore, useMemoFirebase } from "@/firebase/provider"
+import { useCollection } from "@/firebase/firestore/use-collection"
+import { deleteDocumentNonBlocking, addDocumentNonBlocking } from "@/firebase/non-blocking-updates"
 
 export default function TemplatesPage() {
   const { user, isUserLoading } = useUser()

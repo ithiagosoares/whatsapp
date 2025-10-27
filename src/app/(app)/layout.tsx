@@ -29,7 +29,7 @@ import {
   Workflow,
   Shield, // ShieldCheck is not a valid lucide-react icon, using Shield instead
 } from "lucide-react"
-import { useAuth, useUser, useFirestore, useDoc, useMemoFirebase, setDocumentNonBlocking } from "@/firebase"
+
 import { doc } from "firebase/firestore"
 import { type User } from "@/lib/types"
 
@@ -38,6 +38,10 @@ import NavItem from "./nav-item"
 import { OnboardingTour } from "@/components/onboarding-tour"
 import { useEffect, useState, useMemo } from "react"
 import { Loader2 } from "lucide-react"
+
+import { useAuth, useUser, useFirestore, useMemoFirebase } from "@/firebase/provider"
+import { useDoc } from "@/firebase/firestore/use-doc"
+import { setDocumentNonBlocking } from "@/firebase/non-blocking-updates"
 
 export default function AppLayout({
   children,

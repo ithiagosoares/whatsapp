@@ -15,10 +15,13 @@ import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { useUser, useFirestore, useDoc, setDocumentNonBlocking, useMemoFirebase } from "@/firebase"
 import { doc, type User } from "firebase/firestore"
 import { cn } from "@/lib/utils"
 import { getFunctions, httpsCallable } from "firebase/functions"
+
+import { useUser, useFirestore, useMemoFirebase } from "@/firebase/provider"
+import { useDoc } from "@/firebase/firestore/use-doc"
+import { setDocumentNonBlocking } from "@/firebase/non-blocking-updates"
 
 declare global {
   interface Window {

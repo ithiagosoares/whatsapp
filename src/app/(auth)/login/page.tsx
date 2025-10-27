@@ -3,7 +3,6 @@
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState, useEffect } from "react"
-import { useAuth, useUser } from "@/firebase"
 import { initiateEmailSignIn } from "@/firebase/non-blocking-login"
 
 import { Button } from "@/components/ui/button"
@@ -20,6 +19,7 @@ import { Label } from "@/components/ui/label"
 import { useToast } from "@/hooks/use-toast"
 import { FirebaseError } from "firebase/app"
 import Icon from "@/app/icon";
+import { useAuth, useUser } from "@/firebase/provider"
 
 export default function LoginPage() {
   const router = useRouter()

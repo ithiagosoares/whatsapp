@@ -21,7 +21,6 @@ import {
 } from "@/components/ui/table"
 import { XCircle, Search, Workflow, Loader2, Pencil, Calendar as CalendarIcon, MoreVertical, Trash2 } from "lucide-react"
 import { type ScheduledMessage, type Patient, type Template } from "@/lib/types"
-import { useUser, useFirestore, useCollection, useMemoFirebase, deleteDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase"
 import { collection, doc, Timestamp } from "firebase/firestore"
 import { ClientSideDateTime } from "@/components/client-side-date-time"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
@@ -36,6 +35,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { useUser, useFirestore, useMemoFirebase } from "@/firebase/provider"
+import { useCollection } from "@/firebase/firestore/use-collection"
+import { deleteDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase/non-blocking-updates"
 
 type EnrichedMessage = ScheduledMessage & {
   patientName: string;

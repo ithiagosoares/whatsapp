@@ -24,10 +24,12 @@ import {
 import { Switch } from "@/components/ui/switch"
 import { useToast } from "@/hooks/use-toast"
 import { type Workflow, type ScheduledMessage, type Patient } from "@/lib/types"
-import { useUser, useFirestore, useCollection, useMemoFirebase, setDocumentNonBlocking, deleteDocumentNonBlocking, addDocumentNonBlocking } from "@/firebase"
 import { collection, doc, writeBatch, query, where, getDocs, Timestamp, orderBy, limit, getDoc } from "firebase/firestore"
 import { add, sub } from "date-fns"
 
+import { useUser, useFirestore, useMemoFirebase } from "@/firebase/provider"
+import { useCollection } from "@/firebase/firestore/use-collection"
+import { setDocumentNonBlocking, deleteDocumentNonBlocking, addDocumentNonBlocking } from "@/firebase/non-blocking-updates"
 
 export default function WorkflowsPage() {
   const { toast } = useToast()

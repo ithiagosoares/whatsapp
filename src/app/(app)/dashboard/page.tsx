@@ -13,7 +13,8 @@ import {
 import { Button } from "@/components/ui/button"
 import { MessageSquare, Users, AlertCircle, Calendar, PlusCircle, FileText, Loader2 } from "lucide-react"
 import Link from "next/link"
-import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase"
+import { useUser, useFirestore, useMemoFirebase } from "@/firebase/provider"
+import { useCollection } from "@/firebase/firestore/use-collection"
 import { collection } from "firebase/firestore"
 import { type Patient, type ScheduledMessage } from "@/lib/types"
 

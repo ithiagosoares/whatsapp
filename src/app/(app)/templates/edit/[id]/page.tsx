@@ -8,11 +8,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { useUser, useFirestore, useDoc, setDocumentNonBlocking, useMemoFirebase } from "@/firebase"
 import { doc } from "firebase/firestore"
 import { useToast } from "@/hooks/use-toast"
 import { type Template } from "@/lib/types"
 import { Loader2, FileImage, FileText, Paperclip, X } from "lucide-react"
+
+import { useUser, useFirestore, useMemoFirebase } from "@/firebase/provider"
+import { useDoc } from "@/firebase/firestore/use-doc"
+import { setDocumentNonBlocking } from "@/firebase/non-blocking-updates"
 
 export default function EditTemplatePage() {
   const router = useRouter()

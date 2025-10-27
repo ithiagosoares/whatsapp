@@ -25,8 +25,10 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { PageHeader } from "@/components/page-header"
 import { PatientForm } from "@/components/patient-form"
 import { type Patient } from "@/lib/types"
-import { useUser, useFirestore, useCollection, useMemoFirebase, deleteDocumentNonBlocking } from "@/firebase"
 import { ClientSideDateTime } from "@/components/client-side-date-time"
+import { useUser, useFirestore, useMemoFirebase } from "@/firebase/provider"
+import { useCollection } from "@/firebase/firestore/use-collection"
+import { deleteDocumentNonBlocking } from "@/firebase/non-blocking-updates"
 
 export default function PatientsPage() {
   const [isFormOpen, setIsFormOpen] = useState(false)

@@ -13,11 +13,14 @@ import { MultiSelect } from "@/components/ui/multi-select"
 import { useToast } from "@/hooks/use-toast"
 import { useRouter, useParams } from "next/navigation"
 import { type Patient, type Workflow, type Template, WorkflowStep, ScheduledMessage } from "@/lib/types"
-import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase, setDocumentNonBlocking, addDocumentNonBlocking } from "@/firebase"
 import { doc, collection, writeBatch, query, where, getDocs, Timestamp } from "firebase/firestore"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { add, sub } from "date-fns"
 
+import { useUser, useFirestore, useMemoFirebase } from "@/firebase/provider"
+import { useDoc } from "@/firebase/firestore/use-doc"
+import { useCollection } from "@/firebase/firestore/use-collection"
+import { addDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase/non-blocking-updates"
 
 export default function EditWorkflowPage() {
   const router = useRouter();

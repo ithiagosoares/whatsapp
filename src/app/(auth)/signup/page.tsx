@@ -3,7 +3,6 @@
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState, useEffect } from "react"
-import { useAuth, useUser, initiateEmailSignUp, useFirestore, setDocumentNonBlocking } from "@/firebase"
 import { doc } from "firebase/firestore"
 
 import { Button } from "@/components/ui/button"
@@ -20,6 +19,10 @@ import { useToast } from "@/hooks/use-toast"
 import { FirebaseError } from "firebase/app"
 import { UserCredential } from "firebase/auth"
 import Icon from "@/app/icon";
+
+import { useAuth, useUser, useFirestore } from "@/firebase/provider"
+import { initiateEmailSignUp } from "@/firebase/non-blocking-login"
+import { setDocumentNonBlocking } from "@/firebase/non-blocking-updates"
 
 export default function SignupPage() {
   const router = useRouter()

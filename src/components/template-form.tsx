@@ -6,9 +6,11 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { FileUp } from "lucide-react"
-import { useUser, useFirestore, addDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase"
 import { collection, doc } from "firebase/firestore"
 import { type Template } from "@/lib/types"
+
+import { useUser, useFirestore } from "@/firebase/provider"
+import { addDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase/non-blocking-updates"
 
 type TemplateFormProps = {
   template: Template | null;

@@ -6,7 +6,6 @@ import { Badge } from "@/components/ui/badge"
 import { Calendar } from "@/components/ui/calendar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { type Appointment, type Patient } from "@/lib/types"
-import { useUser, useFirestore, FirestorePermissionError, errorEmitter, useCollection, useMemoFirebase, addDocumentNonBlocking } from "@/firebase"
 import { collection, query, where, getDocs, DocumentData, Query, Timestamp } from "firebase/firestore"
 import { Loader2 } from "lucide-react"
 import { isSameDay, format, parse } from "date-fns"
@@ -14,6 +13,12 @@ import { zonedTimeToUtc, toZonedTime } from "date-fns-tz"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/hooks/use-toast"
 import { ClientSideDateTime } from "@/components/client-side-date-time"
+import { useUser, useFirestore, useMemoFirebase } from "@/firebase/provider"
+import { useCollection } from "@/firebase/firestore/use-collection"
+import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates"
+import { FirestorePermissionError } from "@/firebase/errors"
+import { errorEmitter } from "@/firebase/error-emitter"
+
 
 export default function CalendarPage() {
   const [allAppointments, setAllAppointments] = useState<Appointment[]>([])

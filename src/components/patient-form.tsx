@@ -17,11 +17,13 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar"
 import { Checkbox } from "@/components/ui/checkbox"
 import { type Patient } from "@/lib/types"
-import { useUser, useFirestore, setDocumentNonBlocking, addDocumentNonBlocking } from "@/firebase"
 import { collection, doc, Timestamp } from "firebase/firestore"
 import { format } from "date-fns"
 import { Calendar as CalendarIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
+
+import { useUser, useFirestore } from "@/firebase/provider"
+import { setDocumentNonBlocking, addDocumentNonBlocking } from "@/firebase/non-blocking-updates"
 
 type PatientFormProps = {
   open: boolean

@@ -13,10 +13,13 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { MultiSelect } from "@/components/ui/multi-select"
 import { type Patient, type Template, type WorkflowStep } from "@/lib/types"
-import { useUser, useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking } from "@/firebase"
 import { collection } from "firebase/firestore"
 import { useToast } from "@/hooks/use-toast"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+
+import { useUser, useFirestore, useMemoFirebase } from "@/firebase/provider"
+import { useCollection } from "@/firebase/firestore/use-collection"
+import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates"
 
 export default function NewWorkflowPage() {
     const router = useRouter();
