@@ -155,7 +155,7 @@ export default function SettingsPage() {
         name: "Trial",
         price: "Grátis",
         priceDescription: "por 14 dias",
-        features: ["50 mensagens/mês", "1 usuário", "Funcionalidades básicas"],
+        features: ["200 mensagens/mês", "1 usuário", "Funcionalidades básicas"],
         isCurrent: (userData as any)?.plan === "Trial",
     },
     {
@@ -163,6 +163,7 @@ export default function SettingsPage() {
         name: "Profissional",
         price: "R$ 99",
         priceDescription: "/mês",
+        priceId: "price_1SMqjoEEZjNwuQwBIEAKUGgi",
         features: ["5.000 mensagens/mês", "Até 3 usuários", "Suporte via E-mail"],
         isCurrent: (userData as any)?.plan === "Profissional",
     },
@@ -187,9 +188,16 @@ export default function SettingsPage() {
     
     // Placeholder for Stripe checkout logic
     setTimeout(() => {
-        toast({
-            title: `Redirecionando para pagamento do plano ${planId}`
-        })
+        if (priceId) {
+          toast({
+              title: `Redirecionando para pagamento do plano ${planId}`,
+              description: `Price ID: ${priceId}`
+          })
+        } else {
+           toast({
+              title: `Ação para o plano ${planId}`
+          })
+        }
         setIsSubmitting(null)
     }, 2000)
   };
@@ -392,7 +400,7 @@ export default function SettingsPage() {
                                     className={cn("w-full", !plan.isCurrent && plan.id === 'professional' && "bg-teal-500 hover:bg-teal-600")}
                                     variant={plan.isCurrent ? 'outline' : 'default'}
                                     disabled={plan.isCurrent || isSubmitting === plan.id}
-                                    onClick={() => handlePlanAction(plan.id, null)}
+                                    onClick={() => handlePlanAction(plan.id, (plan as any).priceId)}
                                 >
                                     {isSubmitting === plan.id ? (
                                         <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Aguarde...</>
@@ -450,5 +458,3 @@ export default function SettingsPage() {
     </>
   )
 }
-
-    
