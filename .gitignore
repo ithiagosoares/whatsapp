@@ -1,9 +1,0 @@
-# Ignore tudo por padrão
-*
-
-# Não ignore o diretório do backend de WhatsApp e seu conteúdo
-!whatsapp-backend/
-!whatsapp-backend/**
-
-# Não ignore este arquivo .gitignore
-!.gitignore
