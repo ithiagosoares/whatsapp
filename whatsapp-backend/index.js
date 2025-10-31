@@ -1,100 +1,120 @@
 const express = require('express');
 const { Client, LocalAuth } = require('whatsapp-web.js');
 const qrcode = require('qrcode');
+const cors = require('cors');
 
 const app = express();
+app.use(cors()); // Permite requisições de outras origens (seu frontend)
 app.use(express.json());
 
-const clients = {};
+const sessions = {};
 
-// Endpoint para iniciar a sessão e obter o QR code
+const createWhatsappSession = (sessionId) => {
+  console.log(`Criando sessão: ${sessionId}`);
+  
+  const client = new Client({
+    authStrategy: new LocalAuth({ clientId: sessionId }),
+    puppeteer: {
+      headless: true,
+      executablePath: '/usr/bin/google-chrome-stable',
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-accelerated-2d-canvas',
+        '--no-first-run',
+        '--no-zygote',
+        '--single-process', // <- this one doesn't works in Windows
+        '--disable-gpu'
+      ],
+    },
+  });
+
+  client.on('qr', async (qr) => {
+    console.log(`[${sessionId}] QR Code recebido, gerando base64...`);
+    const qrImage = await qrcode.toDataURL(qr);
+    sessions[sessionId] = { ...sessions[sessionId], qr: qrImage, status: 'QR_PENDING' };
+  });
+
+  client.on('ready', () => {
+    console.log(`[${sessionId}] WhatsApp está pronto!`);
+    sessions[sessionId].status = 'READY';
+  });
+
+  client.on('authenticated', () => {
+    console.log(`[${sessionId}] Autenticado com sucesso!`);
+    sessions[sessionId].status = 'AUTHENTICATED';
+  });
+  
+  client.on('auth_failure', (msg) => {
+    console.error(`[${sessionId}] Falha na autenticação:`, msg);
+    // Encerra e remove a sessão com falha
+    delete sessions[sessionId];
+    client.destroy();
+  });
+
+  client.initialize().catch(err => console.error(`[${sessionId}] Falha ao inicializar o cliente: `, err));
+
+  sessions[sessionId] = { client, status: 'INITIALIZING' };
+  return client;
+};
+
+// Rota para iniciar a sessão e obter o QR Code
 app.post('/start-session', async (req, res) => {
-    const { userId } = req.body;
-    if (!userId) {
-        return res.status(400).json({ success: false, error: 'userId is required' });
+  const { sessionId } = req.body;
+  if (!sessionId) {
+    return res.status(400).json({ success: false, error: 'sessionId é obrigatório.' });
+  }
+
+  if (sessions[sessionId] && (sessions[sessionId].status === 'READY' || sessions[sessionId].status === 'AUTHENTICATED')) {
+     return res.json({ success: true, message: 'Sessão já está ativa.' });
+  }
+
+  // Cria uma nova sessão se não existir
+  createWhatsappSession(sessionId);
+
+  // Espera pelo QR code ser gerado
+  let attempts = 0;
+  const interval = setInterval(() => {
+    if (sessions[sessionId] && sessions[sessionId].qr) {
+      clearInterval(interval);
+      return res.json({ success: true, qrCode: sessions[sessionId].qr });
     }
-
-    console.log(`[${userId}] Iniciando sessão...`);
-
-    const client = new Client({
-        authStrategy: new LocalAuth({ clientId: userId }),
-        puppeteer: {
-            headless: true,
-            executablePath: '/usr/bin/google-chrome-stable',
-            args: [
-                '--no-sandbox',
-                '--disable-setuid-sandbox',
-                '--disable-dev-shm-usage',
-                '--disable-accelerated-2d-canvas',
-                '--no-first-run',
-                '--no-zygote',
-                '--single-process', // <- this one doesn't works in Windows
-                '--disable-gpu'
-            ],
-        },
-    });
-
-    client.on('qr', async (qr) => {
-        console.log(`[${userId}] QR Code recebido. Enviando para o frontend.`);
-        try {
-            const qrCodeBase64 = await qrcode.toDataURL(qr);
-            // Este evento pode ser emitido várias vezes, mas só queremos enviar uma resposta.
-            if (!res.headersSent) {
-                res.json({ success: true, qrCode: qrCodeBase64 });
-            }
-        } catch (err) {
-            console.error(`[${userId}] Erro ao gerar QR Code:`, err);
-            if (!res.headersSent) {
-                res.status(500).json({ success: false, error: 'Failed to generate QR code' });
-            }
-        }
-    });
-
-    client.on('ready', () => {
-        console.log(`[${userId}] WhatsApp conectado e pronto!`);
-        clients[userId] = client;
-    });
-
-    client.on('auth_failure', (msg) => {
-        console.error(`[${userId}] Falha na autenticação:`, msg);
-        if (!res.headersSent) {
-            res.status(500).json({ success: false, error: 'Authentication failure' });
-        }
-    });
-
-    client.initialize().catch(err => {
-         console.error(`[${userId}] Falha ao inicializar o cliente:`, err);
-         if (!res.headersSent) {
-            res.status(500).json({ success: false, error: 'Failed to initialize client' });
-        }
-    });
+    if (attempts++ > 30) { // Timeout de 30 segundos
+      clearInterval(interval);
+      delete sessions[sessionId]; // Limpa a sessão falha
+      return res.status(500).json({ success: false, error: 'Timeout ao gerar QR Code.' });
+    }
+  }, 1000);
 });
 
-// Endpoint para enviar mensagem
+// Rota para enviar mensagem
 app.post('/send-message', async (req, res) => {
-    const { userId, number, message } = req.body;
-    if (!userId || !number || !message) {
-        return res.status(400).json({ success: false, error: 'userId, number, and message are required' });
-    }
+  const { sessionId, number, message } = req.body;
+  if (!sessionId || !number || !message) {
+    return res.status(400).json({ success: false, error: 'sessionId, number e message são obrigatórios.' });
+  }
 
-    const client = clients[userId];
-    if (!client) {
-        return res.status(404).json({ success: false, error: 'Session not found for this userId. Please start a session first.' });
-    }
-
-    try {
-        // Formato do número: 55DDDNUMERO@c.us (ex: 5511999999999@c.us)
-        const chatId = `${number}@c.us`;
-        await client.sendMessage(chatId, message);
-        console.log(`[${userId}] Mensagem enviada para ${number}`);
-        res.json({ success: true, message: 'Message sent successfully' });
-    } catch (err) {
-        console.error(`[${userId}] Erro ao enviar mensagem:`, err);
-        res.status(500).json({ success: false, error: 'Failed to send message' });
-    }
+  const session = sessions[sessionId];
+  if (!session || session.status !== 'READY') {
+    return res.status(400).json({ success: false, error: 'Sessão não está pronta ou não existe.' });
+  }
+  
+  try {
+    // Formata o número para o padrão do WhatsApp (ex: 5511999998888@c.us)
+    const sanitized_number = number.replace(/[-+ ()]/g, '');
+    const final_number = `55${sanitized_number}@c.us`;
+    
+    await session.client.sendMessage(final_number, message);
+    res.json({ success: true, message: 'Mensagem enviada com sucesso!' });
+  } catch (err) {
+    console.error(`[${sessionId}] Erro ao enviar mensagem:`, err);
+    res.status(500).json({ success: false, error: 'Falha ao enviar mensagem.' });
+  }
 });
+
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
-    console.log(`🚀 Servidor WhatsApp rodando na porta ${PORT}`);
+  console.log(`🚀 Servidor WhatsApp rodando na porta ${PORT}`);
 });
