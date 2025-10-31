@@ -1,9 +1,9 @@
 # Ignore tudo por padrão
 *
 
-# Não ignore o diretório do backend do WhatsApp e seu conteúdo
+# Não ignore o diretório do backend de WhatsApp e seu conteúdo
 !whatsapp-backend/
+!whatsapp-backend/**
 
-# Mas ignore os arquivos de node_modules e de sessão dentro dele
-whatsapp-backend/node_modules
-whatsapp-backend/.wwebjs_auth
+# Não ignore este arquivo .gitignore
+!.gitignore
