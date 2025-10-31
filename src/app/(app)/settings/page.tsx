@@ -1,8 +1,9 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Upload, ExternalLink, MessageCircle, Save, LogIn, LogOut, CheckCircle, Loader2 } from "lucide-react"
+import { Upload, ExternalLink, MessageCircle, Save, LogIn, LogOut, CheckCircle, Loader2, QrCode } from "lucide-react"
 import Link from "next/link"
+import Image from "next/image"
 
 import { PageHeader } from "@/components/page-header"
 import { Button } from "@/components/ui/button"
@@ -51,6 +52,8 @@ export default function SettingsPage() {
   const [retentionPeriod, setRetentionPeriod] = useState("5")
   
   // WhatsApp State
+  const [whatsAppStatus, setWhatsAppStatus] = useState<'disconnected' | 'loading' | 'qrcode' | 'connected'>('disconnected');
+  const [qrCode, setQrCode] = useState('');
   const [isWhatsAppConnected, setIsWhatsAppConnected] = useState(false);
 
   const userDocRef = useMemoFirebase(() => {
@@ -68,9 +71,11 @@ export default function SettingsPage() {
         setLastName(nameParts.slice(1).join(' ') || "");
       }
       setEmail(userData.email || "");
-      if(userData.whatsappApiToken) {
+      if(userData.whatsappApiToken) { // We'll adapt this logic
+        setWhatsAppStatus('connected');
         setIsWhatsAppConnected(true);
       } else {
+        setWhatsAppStatus('disconnected');
         setIsWhatsAppConnected(false);
       }
     }
@@ -94,54 +99,50 @@ export default function SettingsPage() {
     })
   }
   
-  const handleWhatsAppConnect = () => {
-    if (window.FB) {
-        window.FB.login(function(response: any) {
-            if (response.authResponse && response.authResponse.accessToken) {
-                console.log('Welcome! Fetching your information.... ');
-                console.log(response.authResponse);
-                
-                // In a real scenario, this short-lived token would be sent to a backend function 
-                // to be exchanged for a long-lived token and saved securely.
-                // For this prototype, we save the short-lived token directly.
-                if (userDocRef) {
-                    setDocumentNonBlocking(userDocRef, { whatsappApiToken: response.authResponse.accessToken }, { merge: true });
-                }
+  const handleWhatsAppConnect = async () => {
+    if (!authUser) {
+      toast({ variant: "destructive", title: "Erro", description: "Usuário não autenticado." });
+      return;
+    }
+    setWhatsAppStatus('loading');
+    setQrCode('');
 
-                toast({
-                  title: "Conexão Bem-Sucedida!",
-                  description: "Sua conta foi autorizada. O token de acesso foi salvo.",
-                });
+    try {
+      const response = await fetch(`/api/whatsapp/start-session?userId=${authUser.uid}`);
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Falha ao iniciar a sessão do WhatsApp.');
+      }
+      
+      const data = await response.json();
 
-            } else {
-                console.log('User cancelled login or did not fully authorize.');
-                toast({
-                  variant: "destructive",
-                  title: "Conexão Cancelada",
-                  description: "Você cancelou o login ou não autorizou o acesso completo.",
-                });
-            }
-        }, {
-            // This is the Embedded Signup configuration
-            // These values must be replaced with your actual Meta App configuration
-            config_id: 'YOUR_CONFIG_ID_PLACEHOLDER', 
-            response_type: 'code',
-            override_default_response_type: true
-        });
-    } else {
-        toast({
-          variant: "destructive",
-          title: "Erro de Carregamento",
-          description: "O SDK do Facebook não foi carregado. Tente recarregar a página.",
-        });
+      if (data.qrCode) {
+        setQrCode(data.qrCode);
+        setWhatsAppStatus('qrcode');
+      } else {
+        // Handle cases where it might connect without a QR code (e.g., session restored)
+        setWhatsAppStatus('connected');
+        setIsWhatsAppConnected(true);
+      }
+
+    } catch (error: any) {
+      console.error("Error starting WhatsApp session:", error);
+      setWhatsAppStatus('disconnected');
+      toast({
+        variant: "destructive",
+        title: "Erro de Conexão",
+        description: error.message || "Não foi possível gerar o QR Code. Tente novamente.",
+      });
     }
   };
 
   const handleWhatsAppDisconnect = () => {
     if (!userDocRef) return;
-    // In a real scenario, you would also call FB.logout() if the user is logged into FB
-    // and invalidate the token on your backend.
-    setDocumentNonBlocking(userDocRef, { whatsappApiToken: "" }, { merge: true });
+    // Here you would also call an API endpoint to terminate the session on the backend
+    setDocumentNonBlocking(userDocRef, { whatsappApiToken: "" }, { merge: true }); // Placeholder
+    setWhatsAppStatus('disconnected');
+    setIsWhatsAppConnected(false);
     toast({
       variant: "default",
       title: "Desconectado!",
@@ -332,26 +333,44 @@ export default function SettingsPage() {
             <CardHeader>
               <CardTitle>Integração com WhatsApp</CardTitle>
               <CardDescription>
-                Conecte sua conta do WhatsApp Business para automatizar o envio de mensagens.
+                Conecte sua conta do WhatsApp para automatizar o envio de mensagens.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-                {isWhatsAppConnected ? (
+               {whatsAppStatus === 'connected' && (
                     <Alert variant="default" className="border-green-500 bg-green-50 text-green-900">
-                        <MessageCircle className="h-4 w-4 text-green-600" />
+                        <CheckCircle className="h-4 w-4 text-green-600" />
                         <AlertTitle className="text-green-800 font-semibold">Conectado!</AlertTitle>
                         <AlertDescription>
                             Sua conta do WhatsApp está configurada e pronta para enviar mensagens.
                         </AlertDescription>
                     </Alert>
-                ) : (
+                )}
+                 {whatsAppStatus === 'disconnected' && (
                     <Alert variant="destructive" className="border-amber-500 bg-amber-50 text-amber-900">
                         <MessageCircle className="h-4 w-4 text-amber-600" />
                         <AlertTitle className="text-amber-800 font-semibold">Ação Necessária</AlertTitle>
                         <AlertDescription>
-                           Para enviar mensagens, você precisa conectar sua conta do WhatsApp Business.
+                           Para enviar mensagens, você precisa conectar sua conta do WhatsApp.
                         </AlertDescription>
                     </Alert>
+                )}
+
+                {whatsAppStatus === 'loading' && (
+                  <div className="flex flex-col items-center justify-center gap-4 p-8 bg-muted rounded-lg">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                    <p className="text-muted-foreground">Gerando QR Code, aguarde...</p>
+                  </div>
+                )}
+
+                {whatsAppStatus === 'qrcode' && qrCode && (
+                   <div className="flex flex-col items-center justify-center gap-4 p-8 bg-muted rounded-lg">
+                      <h3 className="text-lg font-semibold text-center">Escaneie para Conectar</h3>
+                      <p className="text-sm text-muted-foreground text-center max-w-xs">Abra o WhatsApp no seu celular, vá em Aparelhos Conectados e escaneie o código abaixo.</p>
+                      <div className="bg-white p-4 rounded-lg shadow-md">
+                        <Image src={qrCode} alt="QR Code do WhatsApp" width={256} height={256} />
+                      </div>
+                   </div>
                 )}
             </CardContent>
             <CardFooter>
@@ -361,9 +380,9 @@ export default function SettingsPage() {
                         Desconectar
                     </Button>
                 ) : (
-                    <Button onClick={handleWhatsAppConnect} data-tour-id="connect-whatsapp-button">
-                        <LogIn className="mr-2 h-4 w-4" />
-                        Conectar com Facebook
+                   <Button onClick={handleWhatsAppConnect} disabled={whatsAppStatus === 'loading' || whatsAppStatus === 'qrcode'}>
+                      <QrCode className="mr-2 h-4 w-4" />
+                      Conectar WhatsApp
                     </Button>
                 )}
             </CardFooter>
