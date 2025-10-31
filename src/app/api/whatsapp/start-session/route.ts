@@ -5,7 +5,6 @@ import qrcode from 'qrcode';
 // This is a simple in-memory store for client sessions.
 // For a production app, you'd want to use a more robust solution like Redis or a database.
 const sessions = new Map<string, Client>();
-const qrStore = new Map<string, string>();
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
@@ -15,21 +14,23 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
   }
 
+  // If a session already exists and is ready, we might not need to do anything.
   if (sessions.has(userId)) {
-    const client = sessions.get(userId)!;
-    // If we have a client, check its status. This is a simplified check.
-    // A more robust implementation would properly check the connection status.
-     try {
-        const state = await client.getState();
+      try {
+        const existingClient = sessions.get(userId)!;
+        const state = await existingClient.getState();
         if (state === 'CONNECTED') {
              return NextResponse.json({ message: 'Session already connected.' });
         }
+        // If not connected, destroy and recreate
+        await existingClient.destroy();
+        sessions.delete(userId);
     } catch (e) {
-        // Client might be in a weird state, let's remove it and create a new one
-        console.log("Client state error, creating new session for", userId)
+        console.log("Error with existing client, creating new session for", userId);
         sessions.delete(userId);
     }
   }
+
 
   console.log(`[${userId}] Creating new WhatsApp session...`);
   
@@ -37,7 +38,7 @@ export async function GET(request: NextRequest) {
     authStrategy: new LocalAuth({ clientId: userId }),
     puppeteer: {
       headless: true,
-      executablePath: '/usr/bin/google-chrome-stable',
+      executablePath: '/usr/bin/google-chrome-stable', // Path to the installed Chrome browser
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
@@ -56,8 +57,8 @@ export async function GET(request: NextRequest) {
     
     const timeout = setTimeout(() => {
         console.error(`[${userId}] QR code generation timed out.`);
-        sessions.delete(userId); // Clean up the failed session
-        client.destroy();
+        sessions.delete(userId);
+        client.destroy().catch(e => console.error("Error destroying client on timeout", e));
         resolve(NextResponse.json({ error: 'QR code generation timed out.' }, { status: 500 }));
     }, 60000); // 60-second timeout
 
@@ -66,21 +67,20 @@ export async function GET(request: NextRequest) {
       clearTimeout(timeout);
       try {
         const qrCodeBase64 = await qrcode.toDataURL(qr);
-        qrStore.set(userId, qrCodeBase64); // Store QR code
         
         const responsePayload = {
             qrCode: qrCodeBase64,
-            sessionId: userId, // Using userId as sessionId for simplicity
+            sessionId: userId,
         };
         
         // Asynchronously send to n8n without blocking the response to the frontend
+        // This is a "fire and forget" call.
         fetch('https://vitallink.app.n8n.cloud/webhook-test/start-whatsapp-session', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(responsePayload),
         }).catch(err => console.error(`[${userId}] Failed to send QR to n8n:`, err));
 
-        // Immediately resolve and send QR code to the frontend
         resolve(NextResponse.json(responsePayload));
       } catch (err) {
         console.error(`[${userId}] Error generating QR code base64:`, err);
@@ -90,16 +90,14 @@ export async function GET(request: NextRequest) {
 
     client.on('ready', () => {
       console.log(`[${userId}] WhatsApp client is ready!`);
-      clearTimeout(timeout); // Clear timeout on successful connection
-      qrStore.delete(userId); // QR code is no longer needed
-      // In a real app, you might want to notify the frontend that connection is complete.
+      clearTimeout(timeout);
     });
 
     client.on('auth_failure', (msg) => {
       console.error(`[${userId}] Authentication failure:`, msg);
       clearTimeout(timeout);
       sessions.delete(userId);
-      client.destroy();
+      client.destroy().catch(e => console.error("Error destroying client on auth failure", e));
       resolve(NextResponse.json({ error: 'Authentication failed.' }, { status: 500 }));
     });
     
