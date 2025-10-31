@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect } from "react"
@@ -18,17 +19,15 @@ import { useToast } from "@/hooks/use-toast"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { doc, type User } from "firebase/firestore"
 import { cn } from "@/lib/utils"
-import { getFunctions, httpsCallable } from "firebase/functions"
 
 import { useUser, useFirestore, useMemoFirebase } from "@/firebase/provider"
 import { useDoc } from "@/firebase/firestore/use-doc"
 import { setDocumentNonBlocking } from "@/firebase/non-blocking-updates"
 
-declare global {
-  interface Window {
-    FB: any;
-  }
-}
+// URL do seu novo backend de WhatsApp.
+// Adicione esta variável ao seu ambiente (.env.local)
+const WHATSAPP_BACKEND_URL = process.env.NEXT_PUBLIC_WHATSAPP_BACKEND_URL || "http://localhost:3001";
+
 
 export default function SettingsPage() {
   const { toast } = useToast()
@@ -54,8 +53,7 @@ export default function SettingsPage() {
   // WhatsApp State
   const [whatsAppStatus, setWhatsAppStatus] = useState<'disconnected' | 'loading' | 'qrcode' | 'connected'>('disconnected');
   const [qrCode, setQrCode] = useState('');
-  const [isWhatsAppConnected, setIsWhatsAppConnected] = useState(false);
-
+  
   const userDocRef = useMemoFirebase(() => {
     if (!authUser) return null;
     return doc(firestore, `users/${authUser.uid}`);
@@ -71,12 +69,11 @@ export default function SettingsPage() {
         setLastName(nameParts.slice(1).join(' ') || "");
       }
       setEmail(userData.email || "");
-      if(userData.whatsappApiToken) { // We'll adapt this logic
+      // Verifique se a sessão do WhatsApp já está ativa (simplificado)
+      if (userData.whatsappSessionId) {
         setWhatsAppStatus('connected');
-        setIsWhatsAppConnected(true);
       } else {
         setWhatsAppStatus('disconnected');
-        setIsWhatsAppConnected(false);
       }
     }
   }, [userData]);
@@ -108,22 +105,27 @@ export default function SettingsPage() {
     setQrCode('');
 
     try {
-      const response = await fetch(`/api/whatsapp/start-session?userId=${authUser.uid}`);
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Falha ao iniciar a sessão do WhatsApp.');
-      }
+      const response = await fetch(`${WHATSAPP_BACKEND_URL}/start-session`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: authUser.uid })
+      });
       
       const data = await response.json();
 
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || 'Falha ao iniciar a sessão do WhatsApp.');
+      }
+      
       if (data.qrCode) {
         setQrCode(data.qrCode);
         setWhatsAppStatus('qrcode');
-      } else {
-        // Handle cases where it might connect without a QR code (e.g., session restored)
+        // Após a conexão, salve o sessionId no perfil do usuário no Firestore
+        // (A lógica de 'quando' salvar pode ser melhorada com webhooks do backend)
+        setDocumentNonBlocking(userDocRef!, { whatsappSessionId: data.sessionId }, { merge: true });
+      } else if (data.message === 'Sessão já está conectada.') {
         setWhatsAppStatus('connected');
-        setIsWhatsAppConnected(true);
+        toast({ title: 'Já Conectado', description: 'Sua sessão do WhatsApp já estava ativa.' });
       }
 
     } catch (error: any) {
@@ -132,17 +134,17 @@ export default function SettingsPage() {
       toast({
         variant: "destructive",
         title: "Erro de Conexão",
-        description: error.message || "Não foi possível gerar o QR Code. Tente novamente.",
+        description: error.message || "Não foi possível conectar. Tente novamente.",
       });
     }
   };
 
   const handleWhatsAppDisconnect = () => {
-    if (!userDocRef) return;
-    // Here you would also call an API endpoint to terminate the session on the backend
-    setDocumentNonBlocking(userDocRef, { whatsappApiToken: "" }, { merge: true }); // Placeholder
+    // No backend real, você chamaria um endpoint /disconnect-session
+    if (userDocRef) {
+        setDocumentNonBlocking(userDocRef, { whatsappSessionId: "" }, { merge: true });
+    }
     setWhatsAppStatus('disconnected');
-    setIsWhatsAppConnected(false);
     toast({
       variant: "default",
       title: "Desconectado!",
@@ -374,7 +376,7 @@ export default function SettingsPage() {
                 )}
             </CardContent>
             <CardFooter>
-                {isWhatsAppConnected ? (
+                {whatsAppStatus === 'connected' ? (
                     <Button onClick={handleWhatsAppDisconnect} variant="destructive">
                         <LogOut className="mr-2 h-4 w-4" />
                         Desconectar

@@ -1,0 +1,19 @@
+
+{
+  "name": "vitallink-whatsapp-backend",
+  "version": "1.0.0",
+  "description": "WhatsApp API service for VitalLink",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "qrcode": "^1.5.3",
+    "whatsapp-web.js": "^1.23.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

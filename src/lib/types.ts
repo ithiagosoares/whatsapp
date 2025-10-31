@@ -1,3 +1,4 @@
+
 import { Timestamp } from "firebase/firestore";
 
 export type User = {
@@ -6,6 +7,7 @@ export type User = {
   email: string;
   onboardingCompleted?: boolean;
   whatsappApiToken?: string;
+  whatsappSessionId?: string;
 }
 
 export type Patient = {
