@@ -1,206 +1,100 @@
-
-import express from 'express';
-import { Client, LocalAuth } from 'whatsapp-web.js';
-import qrcode from 'qrcode';
-import fs from 'fs';
+const express = require('express');
+const { Client, LocalAuth } = require('whatsapp-web.js');
+const qrcode = require('qrcode');
 
 const app = express();
 app.use(express.json());
 
-// Gerencia múltiplas sessões de clientes
-const sessions = {};
-const MAX_SESSIONS = 10; // Limite para evitar abuso de memória
+const clients = {};
 
-const PUPPETEER_ARGS = [
-    '--no-sandbox',
-    '--disable-setuid-sandbox',
-    '--disable-dev-shm-usage',
-    '--disable-accelerated-2d-canvas',
-    '--no-first-run',
-    '--no-zygote',
-    '--disable-gpu'
-];
+// Endpoint para iniciar a sessão e obter o QR code
+app.post('/start-session', async (req, res) => {
+    const { userId } = req.body;
+    if (!userId) {
+        return res.status(400).json({ success: false, error: 'userId is required' });
+    }
 
-// Função para criar e inicializar uma sessão
-const createSession = (sessionId) => {
-    console.log(`[${sessionId}] Criando nova sessão...`);
-    
+    console.log(`[${userId}] Iniciando sessão...`);
+
     const client = new Client({
-        authStrategy: new LocalAuth({ clientId: sessionId }),
+        authStrategy: new LocalAuth({ clientId: userId }),
         puppeteer: {
             headless: true,
-            args: PUPPETEER_ARGS,
-            // Esta é a linha crucial para ambientes de servidor Linux
-            executablePath: process.env.CHROME_BIN || '/usr/bin/google-chrome-stable',
-        }
+            executablePath: '/usr/bin/google-chrome-stable',
+            args: [
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-dev-shm-usage',
+                '--disable-accelerated-2d-canvas',
+                '--no-first-run',
+                '--no-zygote',
+                '--single-process', // <- this one doesn't works in Windows
+                '--disable-gpu'
+            ],
+        },
     });
 
-    client.on('qr', (qr) => {
-        console.log(`[${sessionId}] QR Code recebido. Gerando base64...`);
-        qrcode.toDataURL(qr, (err, url) => {
-            if (err) {
-                console.error(`[${sessionId}] Erro ao gerar QR Code:`, err);
-                if (sessions[sessionId]) {
-                    sessions[sessionId].qr = null;
-                    sessions[sessionId].error = 'Falha ao gerar QR Code.';
-                }
-                return;
+    client.on('qr', async (qr) => {
+        console.log(`[${userId}] QR Code recebido. Enviando para o frontend.`);
+        try {
+            const qrCodeBase64 = await qrcode.toDataURL(qr);
+            // Este evento pode ser emitido várias vezes, mas só queremos enviar uma resposta.
+            if (!res.headersSent) {
+                res.json({ success: true, qrCode: qrCodeBase64 });
             }
-             if (sessions[sessionId]) {
-                sessions[sessionId].qr = url;
-                sessions[sessionId].status = 'QR_CODE_READY';
+        } catch (err) {
+            console.error(`[${userId}] Erro ao gerar QR Code:`, err);
+            if (!res.headersSent) {
+                res.status(500).json({ success: false, error: 'Failed to generate QR code' });
             }
-        });
+        }
     });
 
     client.on('ready', () => {
-        console.log(`[${sessionId}] Cliente está pronto!`);
-        if (sessions[sessionId]) {
-            sessions[sessionId].status = 'CONNECTED';
-            sessions[sessionId].qr = null; // QR não é mais necessário
-        }
+        console.log(`[${userId}] WhatsApp conectado e pronto!`);
+        clients[userId] = client;
     });
 
     client.on('auth_failure', (msg) => {
-        console.error(`[${sessionId}] Falha na autenticação:`, msg);
-        if (sessions[sessionId]) {
-            sessions[sessionId].status = 'AUTH_FAILURE';
-            sessions[sessionId].error = 'Falha na autenticação. Por favor, tente novamente.';
+        console.error(`[${userId}] Falha na autenticação:`, msg);
+        if (!res.headersSent) {
+            res.status(500).json({ success: false, error: 'Authentication failure' });
         }
-        // Aqui você pode remover a sessão para forçar uma nova tentativa
-        setTimeout(() => removeSession(sessionId), 5000);
-    });
-    
-    client.on('disconnected', (reason) => {
-        console.log(`[${sessionId}] Cliente foi desconectado!`, reason);
-        removeSession(sessionId);
     });
 
     client.initialize().catch(err => {
-        console.error(`[${sessionId}] Falha ao inicializar: `, err);
-         if (sessions[sessionId]) {
-            sessions[sessionId].status = 'ERROR';
-            sessions[sessionId].error = 'Falha ao inicializar o cliente WhatsApp.';
+         console.error(`[${userId}] Falha ao inicializar o cliente:`, err);
+         if (!res.headersSent) {
+            res.status(500).json({ success: false, error: 'Failed to initialize client' });
         }
     });
-    
-    if (sessions[sessionId]) {
-         sessions[sessionId].client = client;
-    } else {
-        sessions[sessionId] = {
-            client,
-            status: 'INITIALIZING',
-            qr: null,
-            error: null,
-        };
-    }
-};
-
-// Função para remover uma sessão
-const removeSession = (sessionId) => {
-    if (sessions[sessionId] && sessions[sessionId].client) {
-        sessions[sessionId].client.destroy();
-        delete sessions[sessionId];
-        console.log(`[${sessionId}] Sessão removida.`);
-    }
-};
-
-/**
- * ROTA: /start-session
- * Inicia uma nova sessão de WhatsApp e retorna o QR Code.
- */
-app.post('/start-session', (req, res) => {
-    const { userId } = req.body;
-    if (!userId) {
-        return res.status(400).json({ success: false, error: 'userId é obrigatório.' });
-    }
-
-    const sessionId = `session-${userId}`;
-
-    if (Object.keys(sessions).length >= MAX_SESSIONS && !sessions[sessionId]) {
-         return res.status(503).json({ success: false, error: 'Serviço temporariamente sobrecarregado. Tente mais tarde.' });
-    }
-    
-    if (!sessions[sessionId]) {
-        createSession(sessionId);
-    } else if (sessions[sessionId].status === 'AUTH_FAILURE' || sessions[sessionId].status === 'ERROR') {
-         // Se a sessão falhou, remove e recria
-        removeSession(sessionId);
-        createSession(sessionId);
-    }
-
-    // Tenta retornar o QR Code. Espera até 40 segundos.
-    let attempts = 0;
-    const interval = setInterval(() => {
-        const currentSession = sessions[sessionId];
-
-        if (currentSession?.status === 'QR_CODE_READY' && currentSession.qr) {
-            clearInterval(interval);
-            return res.json({ success: true, qrCode: currentSession.qr, sessionId });
-        }
-        
-        if (currentSession?.status === 'CONNECTED') {
-             clearInterval(interval);
-             return res.json({ success: true, message: 'Sessão já está conectada.' });
-        }
-
-        if (currentSession?.error) {
-            clearInterval(interval);
-            return res.status(500).json({ success: false, error: currentSession.error });
-        }
-
-        if (attempts++ > 40) { // Timeout aumentado para 40 segundos
-            clearInterval(interval);
-            removeSession(sessionId);
-            return res.status(500).json({ success: false, error: 'Timeout: QR Code não foi gerado a tempo.' });
-        }
-    }, 1000);
 });
 
-/**
- * ROTA: /send-message
- * Envia uma mensagem usando uma sessão ativa.
- */
+// Endpoint para enviar mensagem
 app.post('/send-message', async (req, res) => {
-    const { sessionId, number, message } = req.body;
-
-    if (!sessionId || !number || !message) {
-        return res.status(400).json({ success: false, error: 'sessionId, number e message são obrigatórios.' });
+    const { userId, number, message } = req.body;
+    if (!userId || !number || !message) {
+        return res.status(400).json({ success: false, error: 'userId, number, and message are required' });
     }
 
-    const session = sessions[sessionId];
-    if (!session || session.status !== 'CONNECTED') {
-        return res.status(404).json({ success: false, error: 'Sessão não encontrada ou não conectada.' });
+    const client = clients[userId];
+    if (!client) {
+        return res.status(404).json({ success: false, error: 'Session not found for this userId. Please start a session first.' });
     }
 
     try {
-        const sanitized_number = number.replace(/[-+()\s]/g, ''); // Remove caracteres especiais
-        const final_number = `55${sanitized_number}@c.us`; // Adiciona DDI do Brasil
-
-        const msg = await session.client.sendMessage(final_number, message);
-        console.log(`[${sessionId}] Mensagem enviada para ${final_number}`);
-        res.json({ success: true, messageId: msg.id._serialized });
+        // Formato do número: 55DDDNUMERO@c.us (ex: 5511999999999@c.us)
+        const chatId = `${number}@c.us`;
+        await client.sendMessage(chatId, message);
+        console.log(`[${userId}] Mensagem enviada para ${number}`);
+        res.json({ success: true, message: 'Message sent successfully' });
     } catch (err) {
-        console.error(`[${sessionId}] Erro ao enviar mensagem:`, err);
-        res.status(500).json({ success: false, error: 'Falha ao enviar mensagem.' });
+        console.error(`[${userId}] Erro ao enviar mensagem:`, err);
+        res.status(500).json({ success: false, error: 'Failed to send message' });
     }
-});
-
-
-/**
- * ROTA: /status
- * Retorna o status de todas as sessões ativas (para debug).
- */
-app.get('/status', (req, res) => {
-    const activeSessions = Object.keys(sessions).map(sessionId => ({
-        sessionId,
-        status: sessions[sessionId].status,
-        hasQr: !!sessions[sessionId].qr,
-    }));
-    res.json({ activeSessions });
 });
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
-    console.log(`🚀 Backend WhatsApp rodando na porta ${PORT}`);
+    console.log(`🚀 Servidor WhatsApp rodando na porta ${PORT}`);
 });
