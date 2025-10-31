@@ -30,7 +30,8 @@ const createSession = (sessionId) => {
         puppeteer: {
             headless: true,
             args: PUPPETEER_ARGS,
-            executablePath: process.env.CHROME_BIN || undefined,
+            // Esta é a linha crucial para ambientes de servidor Linux
+            executablePath: process.env.CHROME_BIN || '/usr/bin/google-chrome-stable',
         }
     });
 
@@ -39,25 +40,33 @@ const createSession = (sessionId) => {
         qrcode.toDataURL(qr, (err, url) => {
             if (err) {
                 console.error(`[${sessionId}] Erro ao gerar QR Code:`, err);
-                sessions[sessionId].qr = null;
-                sessions[sessionId].error = 'Falha ao gerar QR Code.';
+                if (sessions[sessionId]) {
+                    sessions[sessionId].qr = null;
+                    sessions[sessionId].error = 'Falha ao gerar QR Code.';
+                }
                 return;
             }
-            sessions[sessionId].qr = url;
-            sessions[sessionId].status = 'QR_CODE_READY';
+             if (sessions[sessionId]) {
+                sessions[sessionId].qr = url;
+                sessions[sessionId].status = 'QR_CODE_READY';
+            }
         });
     });
 
     client.on('ready', () => {
         console.log(`[${sessionId}] Cliente está pronto!`);
-        sessions[sessionId].status = 'CONNECTED';
-        sessions[sessionId].qr = null; // QR não é mais necessário
+        if (sessions[sessionId]) {
+            sessions[sessionId].status = 'CONNECTED';
+            sessions[sessionId].qr = null; // QR não é mais necessário
+        }
     });
 
     client.on('auth_failure', (msg) => {
         console.error(`[${sessionId}] Falha na autenticação:`, msg);
-        sessions[sessionId].status = 'AUTH_FAILURE';
-        sessions[sessionId].error = 'Falha na autenticação. Por favor, tente novamente.';
+        if (sessions[sessionId]) {
+            sessions[sessionId].status = 'AUTH_FAILURE';
+            sessions[sessionId].error = 'Falha na autenticação. Por favor, tente novamente.';
+        }
         // Aqui você pode remover a sessão para forçar uma nova tentativa
         setTimeout(() => removeSession(sessionId), 5000);
     });
@@ -69,21 +78,27 @@ const createSession = (sessionId) => {
 
     client.initialize().catch(err => {
         console.error(`[${sessionId}] Falha ao inicializar: `, err);
-        sessions[sessionId].status = 'ERROR';
-        sessions[sessionId].error = 'Falha ao inicializar o cliente WhatsApp.';
+         if (sessions[sessionId]) {
+            sessions[sessionId].status = 'ERROR';
+            sessions[sessionId].error = 'Falha ao inicializar o cliente WhatsApp.';
+        }
     });
-
-    sessions[sessionId] = {
-        client,
-        status: 'INITIALIZING',
-        qr: null,
-        error: null,
-    };
+    
+    if (sessions[sessionId]) {
+         sessions[sessionId].client = client;
+    } else {
+        sessions[sessionId] = {
+            client,
+            status: 'INITIALIZING',
+            qr: null,
+            error: null,
+        };
+    }
 };
 
 // Função para remover uma sessão
 const removeSession = (sessionId) => {
-    if (sessions[sessionId]) {
+    if (sessions[sessionId] && sessions[sessionId].client) {
         sessions[sessionId].client.destroy();
         delete sessions[sessionId];
         console.log(`[${sessionId}] Sessão removida.`);
@@ -108,11 +123,13 @@ app.post('/start-session', (req, res) => {
     
     if (!sessions[sessionId]) {
         createSession(sessionId);
+    } else if (sessions[sessionId].status === 'AUTH_FAILURE' || sessions[sessionId].status === 'ERROR') {
+         // Se a sessão falhou, remove e recria
+        removeSession(sessionId);
+        createSession(sessionId);
     }
 
-    const session = sessions[sessionId];
-    
-    // Tenta retornar o QR Code. Espera até 30 segundos.
+    // Tenta retornar o QR Code. Espera até 40 segundos.
     let attempts = 0;
     const interval = setInterval(() => {
         const currentSession = sessions[sessionId];
@@ -132,7 +149,7 @@ app.post('/start-session', (req, res) => {
             return res.status(500).json({ success: false, error: currentSession.error });
         }
 
-        if (attempts++ > 30) {
+        if (attempts++ > 40) { // Timeout aumentado para 40 segundos
             clearInterval(interval);
             removeSession(sessionId);
             return res.status(500).json({ success: false, error: 'Timeout: QR Code não foi gerado a tempo.' });
