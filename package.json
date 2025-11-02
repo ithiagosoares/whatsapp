@@ -12,6 +12,7 @@
   "dependencies": {
     "cors": "^2.8.5",
     "express": "^4.19.2",
+    "node-fetch": "^2.7.0",
     "qrcode": "^1.5.3",
     "whatsapp-web.js": "^1.23.0"
   }
