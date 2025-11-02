@@ -4,11 +4,12 @@ FROM ghcr.io/puppeteer/puppeteer:22.9.0
 # Set the working directory
 WORKDIR /usr/src/app
 
-# Copy package.json and package-lock.json
+# Copy package.json and package-lock.json (or just package.json)
 COPY package.json ./
 
 # Install dependencies
-RUN npm install
+# Using --no-cache to ensure a fresh install
+RUN npm install --no-cache
 
 # Copy the rest of the application code
 COPY . .
