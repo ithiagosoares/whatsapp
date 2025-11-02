@@ -1,16 +1,16 @@
 const express = require('express');
-const cors = require('cors'); // Importa o CORS
+const cors = require('cors');
 const { Client, LocalAuth } = require('whatsapp-web.js');
 const qrcode = require('qrcode');
+const fetch = require('node-fetch');
 
 const app = express();
-
-// Habilita o CORS para todas as origens
 app.use(cors());
 app.use(express.json());
 
 const PORT = process.env.PORT || 3000;
 const sessions = {};
+const n8nWebhookUrl = 'https://vitallink.app.n8n.cloud/webhook-test/whatsapp-connected';
 
 console.log('Starting server...');
 
@@ -26,8 +26,6 @@ app.post('/start-session', (req, res) => {
     }
     
     if (sessions[sessionId] && sessions[sessionId].client) {
-         // Se a sessão existe mas não está pronta, o cliente já está inicializando.
-         // A lógica de polling abaixo cuidará de retornar o QR code.
          console.log(`Initialization already in progress for ${userId}.`);
     } else {
         const client = new Client({
@@ -41,7 +39,7 @@ app.post('/start-session', (req, res) => {
                     '--disable-accelerated-2d-canvas',
                     '--no-first-run',
                     '--no-zygote',
-                    '--single-process', // Isso pode não ser ideal para todos os casos, mas ajuda em ambientes restritos
+                    '--single-process',
                     '--disable-gpu'
                 ]
             }
@@ -59,17 +57,45 @@ app.post('/start-session', (req, res) => {
             }
         });
 
-        client.on('ready', () => {
+        client.on('ready', async () => {
             console.log(`WhatsApp client is ready for ${userId}!`);
             if (sessions[sessionId]) {
                 sessions[sessionId].ready = true;
                 delete sessions[sessionId].qr;
             }
+
+            // Notificar o n8n
+            const payload = {
+                userId: userId,
+                sessionId: sessionId,
+                status: 'connected',
+                meta: {
+                    timestamp: new Date().toISOString(),
+                    clientInfo: client.info
+                }
+            };
+
+            try {
+                console.log('Notifying n8n webhook...');
+                const n8nResponse = await fetch(n8nWebhookUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (n8nResponse.ok) {
+                    console.log('n8n webhook notified successfully.');
+                } else {
+                    const responseBody = await n8nResponse.text();
+                    console.error(`Failed to notify n8n webhook. Status: ${n8nResponse.status}`, responseBody);
+                }
+            } catch (error) {
+                console.error('Error calling n8n webhook:', error);
+            }
         });
 
         client.on('auth_failure', msg => {
             console.error(`Authentication failure for ${userId}:`, msg);
-            // Limpa a sessão falha para permitir uma nova tentativa
              if (sessions[sessionId]) {
                 sessions[sessionId].client.destroy();
                 delete sessions[sessionId];
@@ -89,8 +115,6 @@ app.post('/start-session', (req, res) => {
         client.initialize().catch(err => console.error(`Failed to initialize client for ${userId}:`, err));
     }
 
-
-    // Polling para retornar o QR code ou o status de 'pronto'
     let attempts = 0;
     const interval = setInterval(() => {
         if (sessions[sessionId] && sessions[sessionId].qr) {
@@ -101,7 +125,7 @@ app.post('/start-session', (req, res) => {
             clearInterval(interval);
             console.log(`Informing client that session is ready for ${userId}`);
             res.json({ success: true, message: "Client is already connected!" });
-        } else if (attempts > 30) { // Timeout de 30 segundos
+        } else if (attempts > 30) {
             clearInterval(interval);
             console.log(`QR code generation timed out for ${userId}`);
             res.status(500).json({ success: false, error: 'QR code generation timed out.' });
@@ -113,7 +137,6 @@ app.post('/start-session', (req, res) => {
         attempts++;
     }, 1000);
 });
-
 
 app.post('/send-message', async (req, res) => {
     const userId = 'default-user';
