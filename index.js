@@ -15,8 +15,11 @@ const n8nWebhookUrl = 'https://vitallink.app.n8n.cloud/webhook-test/whatsapp-con
 console.log('Starting server...');
 
 app.post('/start-session', (req, res) => {
-    // Para simplificar, usaremos uma única sessão por enquanto
-    const userId = 'default-user'; 
+    const { userId } = req.body;
+    if (!userId) {
+        return res.status(400).json({ success: false, error: 'userId is required' });
+    }
+
     console.log(`Starting session for userId: ${userId}`);
     const sessionId = `session-${userId}`;
 
@@ -139,10 +142,9 @@ app.post('/start-session', (req, res) => {
 });
 
 app.post('/send-message', async (req, res) => {
-    const userId = 'default-user';
-    const { number, message } = req.body;
-    if (!number || !message) {
-        return res.status(400).json({ error: 'number and message are required' });
+    const { userId, number, message } = req.body;
+    if (!userId || !number || !message) {
+        return res.status(400).json({ error: 'userId, number and message are required' });
     }
 
     const sessionId = `session-${userId}`;
